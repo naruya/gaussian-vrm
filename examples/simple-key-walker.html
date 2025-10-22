@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<head>
+  <title>Simple GVRM Key Walker</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+        "gaussian-splats-3d": "https://naruya.github.io/gs-edit/lib/gaussian-splats-3d.module.js",
+        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm",
+        "gvrm": "https://naruya.github.io/gs-edit/lib/gaussian-vrm.min.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GVRM } from 'gvrm';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(640, 480);
+
+    const scene = new THREE.Scene();
+
+    const axesHelper = new THREE.AxesHelper(1);
+    scene.add(axesHelper);
+
+    const camera = new THREE.PerspectiveCamera(65, 640 / 480, 0.01, 100);
+    camera.position.set(2.4, 2.4, 4);
+    camera.lookAt(0, 1, 0);
+
+    // GVRM
+    const gvrm = await GVRM.load('./assets/sample.gvrm', scene, camera, renderer);
+    const character = gvrm.character.currentVrm.scene;
+    character.position.set(0, 0, 0);
+
+    // Load Walking animation
+    await gvrm.changeFBX('./assets/Walking.fbx');
+    gvrm.character.action.play();
+
+    const speed = 0.02;
+    const rotationSpeed = 0.05;
+
+    // Get default rotation
+    const rot0 = character.rotation0.clone();
+
+    // Keyboard state
+    const keys = {};
+    window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+    renderer.setAnimationLoop(() => {
+      gvrm.update();
+
+      // Rotation: A (left) / D (right)
+      if (keys['a']) {
+        character.rotation.y += rotationSpeed;
+      }
+      if (keys['d']) {
+        character.rotation.y -= rotationSpeed;
+      }
+
+      // Movement: W (forward) / S (backward)
+      const angle = character.rotation.y - rot0.y;
+      if (keys['w']) {
+        character.position.x += speed * Math.sin(angle);
+        character.position.z += speed * Math.cos(angle);
+      }
+      if (keys['s']) {
+        character.position.x -= speed * Math.sin(angle);
+        character.position.z -= speed * Math.cos(angle);
+      }
+
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

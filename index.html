@@ -1,0 +1,624 @@
+<!--
+  Copyright (c) 2025 naruya
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license information.
+-->
+
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>GVRM</title>
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      font-size: 14px;
+      margin: 0px;
+      display: flex;
+      overflow: hidden;
+      color: white;
+      /* color: black; */
+      background-color: black;
+    }
+
+    #threejs-container {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: -1;
+    }
+
+    #info {
+      font-size: 12px;
+      top: 4px;
+      left: 8px;
+      position: absolute;
+      color: white !important;
+    }
+
+    #infoR {
+      font-size: 12px;
+      top: 4px;
+      right: 8px;
+      position: absolute;
+      color: white !important;
+    }
+
+    #controls {
+      position: absolute;
+      top: 28px;
+      width: 20%;
+      /* visibility: hidden; */
+    }
+
+    #command-list {
+      position: absolute;
+      top: 60px;
+      left: 28px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.8;
+      display: none;
+      max-width: 320px;
+      font-family: monospace;
+    }
+
+    #command-list h3 {
+      margin: 0 0 12px 0;
+      font-size: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      padding-bottom: 8px;
+    }
+
+    #command-list .command-item {
+      display: flex;
+      margin-bottom: 6px;
+    }
+
+    #command-list .command-key {
+      display: inline-block;
+      min-width: 28px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+
+    #command-list .command-desc {
+      flex: 1;
+    }
+
+    #command-list .not-implemented {
+      color: #888;
+    }
+
+    #status-list {
+      position: absolute;
+      top: 380px;
+      left: 28px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+      display: none;
+      max-width: 320px;
+      font-family: monospace;
+    }
+
+    #status-list h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    #status-list .status-section {
+      margin-bottom: 12px;
+    }
+
+    #status-list .status-section:last-child {
+      margin-bottom: 0;
+    }
+
+    #status-list .status-item {
+      padding: 3px 0;
+      color: #aaa;
+    }
+
+    #status-list .status-item.active {
+      color: white;
+      font-weight: bold;
+    }
+
+    #controlsR {
+      position: absolute;
+      top: 28px;
+      right: 8px;
+      /* visibility: hidden; */
+    }
+
+    #capturedImage {
+      position: absolute;
+      top: 64px;
+      right: 8px;
+      height: 100px;
+      visibility: hidden;
+    }
+
+    #poseCanvas {
+      position: absolute;
+      top: 172px;
+      /* キャプチャ画像の下に配置 */
+      right: 8px;
+      visibility: hidden;
+    }
+
+    #poseCanvas2 {
+      position: absolute;
+      top: 280px;
+      /* キャプチャ画像の下に配置 */
+      right: 8px;
+      visibility: hidden;
+    }
+
+    #error-display {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      padding: 1rem;
+      background: #fdd;
+      visibility: hidden;
+    }
+
+    .select-btn {
+      padding: 20px 40px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      font-size: clamp(14px, 3.5vw, 1.2em);
+      min-width: min(420px, 90vw);
+      max-width: 90vw;
+      box-sizing: border-box;
+    }
+
+    .select-btn:hover {
+      background-color: #45a049;
+    }
+
+    .sample-grid {
+      display: flex;
+      gap: 15px;
+      margin-top: 0px;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      max-width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+      overflow-x: auto;
+      /* padding-bottom: 10px; */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    }
+
+    .sample-grid::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .sample-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sample-grid::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .sample-grid::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sample-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 10px;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .sample-item:hover {
+      border-color: rgba(76, 175, 80, 0.5);
+    }
+
+    .sample-item.selected {
+      border-color: #4CAF50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+
+    .sample-item img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sample-item .sample-name {
+      color: white;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .gvrm-grid {
+      display: flex;
+      gap: 15px;
+      margin-top: 0px;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      max-width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+      overflow-x: auto;
+      /* padding-bottom: 10px; */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    }
+
+    .gvrm-grid::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .gvrm-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .gvrm-grid::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .gvrm-grid::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .gvrm-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 10px;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .gvrm-item:hover {
+      border-color: rgba(76, 175, 80, 0.5);
+    }
+
+    .gvrm-item.selected {
+      border-color: #4CAF50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+
+    .gvrm-item video {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      object-position: 50% 20%;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .gvrm-item .gvrm-name {
+      color: white;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .social-link {
+      position: fixed;
+      bottom: 20px;
+      z-index: 9999;
+      display: none;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .social-link:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .social-link svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+
+    .social-link.visible {
+      display: flex;
+    }
+
+    .twitter-link {
+      right: 20px;
+    }
+
+    .mobile-controls {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 40px;
+      z-index: 9999;
+    }
+
+    .mobile-controls.visible {
+      display: flex;
+    }
+
+    .mobile-btn {
+      padding: 12px 24px;
+      background-color: rgba(0, 0, 0, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .mobile-btn:active {
+      background-color: rgba(255, 255, 255, 0.15);
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="info" class="info">
+    FPS: <span id="fpsdisplay" style="display: inline;"></span>
+  </div>
+
+  <div id="command-list">
+    <h3>Controls</h3>
+    <div class="command-item">
+      <span class="command-key">G</span>
+      <span class="command-desc" style="font-weight: bold;">Switch avatar</span>
+    </div>
+    <div class="command-item">
+      <span class="command-key">A</span>
+      <span class="command-desc" style="font-weight: bold;">Switch animation</span>
+    </div>
+    <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 8px 0;"></div>
+    <div class="command-item">
+      <span class="command-key">P</span>
+      <span class="command-desc">Point cloud mode</span>
+    </div>
+    <div class="command-item">
+      <span class="command-key">Z</span>
+      <span class="command-desc">Show bone axes</span>
+    </div>
+    <div class="command-item">
+      <span class="command-key">X</span>
+      <span class="command-desc">Show mesh</span>
+    </div>
+    <div class="command-item">
+      <span class="command-key">C</span>
+      <span class="command-desc">Show bone capsules</span>
+    </div>
+    <div class="command-item">
+      <span class="command-key">V</span>
+      <span class="command-desc">Update bone visualization</span>
+    </div>
+    <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 8px 0;"></div>
+  </div>
+
+  <div id="status-list">
+    <div class="status-section">
+      <h4>Current Avatar</h4>
+      <div id="avatar-list"></div>
+    </div>
+    <div class="status-section">
+      <h4>Current Animation</h4>
+      <div id="animation-list"></div>
+    </div>
+  </div>
+
+  <div id="infoR" class="info">
+    Loading: <div id="loaddisplay" style="display: inline;">0%</div>
+  </div>
+
+  <div id="controlsR">
+    <img id="capturedImage">
+    <canvas id="poseCanvas"></canvas>
+    <canvas id="poseCanvas2"></canvas>
+  </div>
+
+  <div id="threejs-container"></div>
+
+  <div id="error-display"></div>
+
+  <div id="title"
+    style="display: none; position: fixed; left: 50%; top: 20px; transform: translateX(-50%); color: white; font-size: clamp(12px, 3.5vw, 24px); font-weight: bold; text-align: center; z-index: 102; padding: 0 10px; max-width: 100%; box-sizing: border-box; white-space: nowrap;">
+    💃 Instant Skinned Gaussian Avatars 💃
+  </div>
+
+  <div class="mobile-controls" id="mobile-controls">
+    <button class="mobile-btn" id="mobile-switch-avatar">Switch Avatar</button>
+    <button class="mobile-btn" id="mobile-switch-animation">Switch Animation</button>
+  </div>
+
+  <a href="https://x.com/namahoge" target="_blank" rel="noopener noreferrer" class="social-link twitter-link" id="twitter-link">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  </a>
+
+  <div id="select-background"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: black; z-index: 100;">
+  </div>
+
+  <div id="select-container"
+    style="display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100vh; text-align: center; z-index: 101; overflow-y: auto;">
+    <div style="min-height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0px 0;">
+    <button id="select-button" class="select-btn" style="margin-top: 100px;">Generate or View Your Avatar (.ply or .gvrm)</button>
+    <input type="file" id="file-input" accept=".ply,.gvrm" style="display: none;">
+
+    <div style="color: white; font-size: 16px; margin: 40px 0;">-------- or --------</div>
+
+    <div class="sample-grid">
+      <div class="sample-item" data-sample="sample1">
+        <img src="./assets/sample1.png" alt="sample1">
+        <div class="sample-name">sample1.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample2">
+        <img src="./assets/sample2.png" alt="sample2">
+        <div class="sample-name">sample2.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample3">
+        <img src="./assets/sample3.png" alt="sample3">
+        <div class="sample-name">sample3.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample4">
+        <img src="./assets/sample4.png" alt="sample4">
+        <div class="sample-name">sample4.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample5">
+        <img src="./assets/sample5.png" alt="sample5">
+        <div class="sample-name">sample5.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample6">
+        <img src="./assets/sample6.png" alt="sample6">
+        <div class="sample-name">sample6.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample7">
+        <img src="./assets/sample7.png" alt="sample7">
+        <div class="sample-name">sample7.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample8">
+        <img src="./assets/sample8.png" alt="sample8">
+        <div class="sample-name">sample8.ply</div>
+      </div>
+      <div class="sample-item" data-sample="sample9">
+        <img src="./assets/sample9.png" alt="sample9">
+        <div class="sample-name">sample9.ply</div>
+      </div>
+    </div>
+
+    <button id="select-sample-button" class="select-btn" style="margin-top: 20px;">Generate Avatar from Sample
+      Scan</button>
+
+    <div style="color: white; font-size: 16px; margin: 40px 0 40px 0;">-------- or --------</div>
+
+    <div class="gvrm-grid" id="gvrm-grid">
+      <div class="gvrm-item" data-gvrm="sample1">
+        <video src="./assets/sample1.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample1</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample2">
+        <video src="./assets/sample2.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample2</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample3">
+        <video src="./assets/sample3.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample3</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample4">
+        <video src="./assets/sample4.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample4</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample5">
+        <video src="./assets/sample5.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample5</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample6">
+        <video src="./assets/sample6.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample6</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample7">
+        <video src="./assets/sample7.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample7</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample8">
+        <video src="./assets/sample8.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample8</div>
+      </div>
+      <div class="gvrm-item" data-gvrm="sample9">
+        <video src="./assets/sample9.mp4" autoplay loop muted playsinline></video>
+        <div class="gvrm-name">sample9</div>
+      </div>
+    </div>
+
+    <button id="view-sample-avatars-button" class="select-btn" style="margin-top: 20px;">View Sample Avatars</button>
+    <div style="color: white; font-size: 12px; margin-top: 8px; font-weight: bold;">Viewer is now supported on mobile devices 🎉</div>
+
+    <div style="color: white; font-size: 16px; margin: 40px 0 40px 0;">-------- or --------</div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 40px;">
+      <video src="./assets/scene.mp4" autoplay loop muted playsinline style="width: auto; height: 120px; object-fit: contain; border-radius: 8px; margin-bottom: 32px;"></video>
+      <button id="scene-button" class="select-btn" style="font-weight: bold;">Visit Avatar World</button>
+    </div>
+    </div>
+  </div>
+
+  <div style="position: fixed; bottom: 20px; left: 20px; display: none; gap: 10px; z-index: 9999;" id="bottom-left-buttons">
+    <button id="home-button" style="padding: 10px 20px; background-color: rgba(0, 0, 0, 0.2); color: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 5px; cursor: pointer;">← Home</button>
+    <button id="mobile-mode-button" style="padding: 10px 20px; background-color: rgba(0, 0, 0, 0.2); color: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 5px; cursor: pointer;">Hide Panels</button>
+  </div>
+
+
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script> -->
+  <!-- no cdn -->
+  <script src="./lib/tfjs-core.js"></script>
+  <script src="./lib/tfjs-converter.js"></script>
+  <script src="./lib/tfjs-backend-webgl.js"></script>
+  <script src="./lib/pose-detection.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+      "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+      "three/addons/controls/OrbitControls.js": "./lib/OrbitControls.js",
+      "three/addons/controls/TrackballControls.js": "./lib/TrackballControls.js",
+      "gaussian-splats-3d": "./lib/gaussian-splats-3d.module.js",
+      "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
+    }
+  }
+  </script>
+
+  <script src="error.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>

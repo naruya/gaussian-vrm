@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<head>
+  <title>Simple GVRM Viewer with OrbitControls</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+        "gaussian-splats-3d": "https://naruya.github.io/gs-edit/lib/gaussian-splats-3d.module.js",
+        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm",
+        "gvrm": "https://naruya.github.io/gs-edit/lib/gaussian-vrm.min.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GVRM } from 'gvrm';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(640, 480);
+
+    const scene = new THREE.Scene();
+
+    // Axes
+    const axesHelper = new THREE.AxesHelper(1);
+    scene.add(axesHelper);
+
+    const camera = new THREE.PerspectiveCamera(65, 640 / 480, 0.01, 100);
+    camera.position.set(1.6, 1.6, 2.4);
+
+    // OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.0, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.update();
+
+    // GVRM
+    const gvrm = await GVRM.load('./assets/sample.gvrm', scene, camera, renderer);
+    gvrm.character.currentVrm.scene.position.y = 0;  // Stand on the ground
+    // await gvrm.changeFBX('./assets/Idle.fbx');
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      gvrm.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

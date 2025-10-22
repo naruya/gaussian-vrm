@@ -1,0 +1,190 @@
+<!--
+  Copyright (c) 2025 naruya
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license information.
+-->
+
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Avatar World</title>
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      font-size: 14px;
+      margin: 0px;
+      display: flex;
+      overflow: hidden;
+      color: white;
+      background-color: black;
+    }
+
+    #threejs-container {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: -1;
+    }
+
+    #info {
+      font-size: 12px;
+      top: 4px;
+      left: 8px;
+      position: absolute;
+      color: white !important;
+    }
+
+    #infoR {
+      font-size: 12px;
+      top: 4px;
+      right: 8px;
+      position: absolute;
+      color: white !important;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 9999;
+    }
+
+    .control-button {
+      padding: 10px 20px;
+      background-color: rgba(0, 0, 0, 0.2);
+      color: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .control-button:hover {
+      transform: scale(1.05);
+    }
+
+    .avatar-control-button {
+      padding: 5px 15px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .avatar-control-button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    .avatar-control-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .avatar-control-container {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      z-index: 9999;
+    }
+
+    .social-link {
+      position: fixed;
+      bottom: 20px;
+      z-index: 9999;
+      display: flex;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .social-link:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .social-link svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+
+    .twitter-link {
+      right: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="info" class="info">
+    FPS: <span id="fpsdisplay" style="display: inline;"></span>
+  </div>
+
+  <div id="infoR" class="info">
+    Loading: <div id="loaddisplay" style="display: inline;">0%</div>
+  </div>
+
+  <div class="button-container">
+    <button class="control-button" id="home-button">← Home</button>
+    <button class="control-button" id="sceneButton">Switch Scene</button>
+  </div>
+
+  <div class="avatar-control-container">
+    <div style="margin-bottom: 12px; font-size: 16px;">Add / Remove Avatars (max 6)</div>
+    <div>
+      <button class="avatar-control-button" id="decreaseButton">-</button>
+      <span id="avatarCount" style="margin: 0 15px; font-size: 16px;">1</span>
+      <button class="avatar-control-button" id="increaseButton">+</button>
+    </div>
+  </div>
+
+  <a href="https://x.com/namahoge" target="_blank" rel="noopener noreferrer" class="social-link twitter-link">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  </a>
+
+  <div id="threejs-container"></div>
+
+  <!-- Local TensorFlow.js libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+      "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+      "three/addons/controls/OrbitControls.js": "../../lib/OrbitControls.js",
+      "three/addons/controls/TrackballControls.js": "../../lib/TrackballControls.js",
+      "gaussian-splats-3d": "../../lib/gaussian-splats-3d.module.js",
+      "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
+    }
+  }
+  </script>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>

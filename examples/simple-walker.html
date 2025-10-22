@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<head>
+  <title>Simple GVRM Walker</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+        "gaussian-splats-3d": "https://naruya.github.io/gs-edit/lib/gaussian-splats-3d.module.js",
+        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm",
+        "gvrm": "https://naruya.github.io/gs-edit/lib/gaussian-vrm.min.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GVRM } from 'gvrm';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(640, 480);
+
+    const scene = new THREE.Scene();
+
+    const axesHelper = new THREE.AxesHelper(1);
+    scene.add(axesHelper);
+
+    const camera = new THREE.PerspectiveCamera(65, 640 / 480, 0.01, 100);
+    camera.position.set(2.4, 2.4, 4);
+    camera.lookAt(0, 1, 0);
+
+    // GVRM
+    const gvrm = await GVRM.load('./assets/sample.gvrm', scene, camera, renderer);
+    const character = gvrm.character.currentVrm.scene;
+    character.position.set(1, 0, 1);
+
+    // Load Walking animation
+    await gvrm.changeFBX('./assets/Walking.fbx');
+    gvrm.character.action.play();
+
+    const speed = 0.02;
+    const turnInterval = 90;
+    let frameCount = 0;
+
+    // Get default rotation, set initial rotation
+    const rot0 = character.rotation0.clone();
+    character.rotation.y = -Math.PI / 2 + rot0.y;
+
+    renderer.setAnimationLoop(() => {
+      gvrm.update();
+
+      frameCount++;
+
+      // Turn 90°
+      if (frameCount >= turnInterval) {
+        frameCount = 0;
+        character.rotation.y -= Math.PI / 2;
+      }
+
+      // Move forward
+      const angle = character.rotation.y - rot0.y;
+      character.position.x += speed * Math.sin(angle);
+      character.position.z += speed * Math.cos(angle);
+
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
