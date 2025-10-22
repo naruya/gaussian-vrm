@@ -63,7 +63,7 @@ renderer.setAnimationLoop(() => {
 ```
 
 
-**For more usage, please check [Gaussian-VRM Examples](https://github.com/naruya/gs-edit/tree/public/examples).**<br>
+**For more usage, please check 👉 [Gaussian-VRM Examples](https://github.com/naruya/gs-edit/tree/public/examples) 👈**
 
 
 ## Advanced Examples
