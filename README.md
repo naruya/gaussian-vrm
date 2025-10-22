@@ -74,7 +74,7 @@ renderer.setAnimationLoop(() => {
 
 ### Playable Avatar
 
-<img src="https://i.gyazo.com/cad91dc93a7f4789454c886eb5613730.jpg" width="400px">
+<img src="https://i.gyazo.com/ec1ba83eb39d6ecf08605feaa880c1fd.png" width="400px">
 
 ### Webcam control / Splat Effects
 
