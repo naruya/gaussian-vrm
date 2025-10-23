@@ -4,7 +4,9 @@
 
  `simple-viewer.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-viewer.html))
 
+<!--
 <img width="160" alt="simple-viewer" src="https://github.com/user-attachments/assets/8ace1812-e2b7-4143-a9bf-21eb4dec987d" />
+-->
 
 ```html
 <!DOCTYPE html>
@@ -61,7 +63,9 @@ From now on, we'll skip the HTML part.
 
 - `simple-viewer2.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-viewer2.html))
 
+<!--
 <img width="160" alt="simple-viewer2" src="https://github.com/user-attachments/assets/877a2199-ce78-42a9-a379-8f21ceedbfcc" />
+-->
 
 ```html
   <script type="module">
@@ -107,7 +111,9 @@ From now on, we'll skip the HTML part.
 
 - `simple-walker.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-walker.html))
 
+<!--
 <img width="160" alt="simple-walker" src="https://github.com/user-attachments/assets/6514dcfe-73bc-4f31-b74f-633688a59d8d" />
+-->
 
 ```html
   <script type="module">
@@ -169,7 +175,9 @@ From now on, we'll skip the HTML part.
 
 - `simple-key-walker.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-key-walker.html))
 
+<!--
 <img width="160" alt="simple-key-walker" src="https://github.com/user-attachments/assets/dbfe92bd-915a-4787-8ae7-b116101a6d7a" />
+-->
 
 ```html
   <script type="module">

@@ -89,6 +89,10 @@ Six sample avatars and original scan data are available on Google Drive:
 These avatars are released under the **MIT License**,
 **as long as they are not used in ways that violate public order or morality.**
 
+<!--
+<img width="300" height="876" alt="samples" src="https://github.com/user-attachments/assets/ab1e7e23-ed57-4f57-8fcc-8881743866f8" />
+-->
+
 ## Extra Animation Files
 
 If you would like to use animation files with the sample avatars, the easiest way is to download them from [Mixamo](https://www.mixamo.com/).
