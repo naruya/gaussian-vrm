@@ -4,9 +4,7 @@
 
  `simple-viewer.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-viewer.html))
 
-<!--
-<img width="160" alt="simple-viewer" src="https://github.com/user-attachments/assets/8ace1812-e2b7-4143-a9bf-21eb4dec987d" />
--->
+<img width="160" alt="simple-viewer" src="https://i.gyazo.com/f42b9afd06b0a8045492d7b99f563f58.png" />
 
 ```html
 <!DOCTYPE html>
@@ -63,9 +61,7 @@ From now on, we'll skip the HTML part.
 
 - `simple-viewer2.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-viewer2.html))
 
-<!--
-<img width="160" alt="simple-viewer2" src="https://github.com/user-attachments/assets/877a2199-ce78-42a9-a379-8f21ceedbfcc" />
--->
+<img width="160" alt="simple-viewer2" src="https://i.gyazo.com/a831c9396e2fc953cc89754876d01ce2.png" />
 
 ```html
   <script type="module">
@@ -111,9 +107,7 @@ From now on, we'll skip the HTML part.
 
 - `simple-walker.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-walker.html))
 
-<!--
-<img width="160" alt="simple-walker" src="https://github.com/user-attachments/assets/6514dcfe-73bc-4f31-b74f-633688a59d8d" />
--->
+<img width="160" alt="simple-walker" src="https://i.gyazo.com/6f0fb23ec833725881b57a80315e0c69.png" />
 
 ```html
   <script type="module">
@@ -175,9 +169,7 @@ From now on, we'll skip the HTML part.
 
 - `simple-key-walker.html` ([DEMO](https://naruya.github.io/gs-edit/examples/simple-key-walker.html))
 
-<!--
-<img width="160" alt="simple-key-walker" src="https://github.com/user-attachments/assets/dbfe92bd-915a-4787-8ae7-b116101a6d7a" />
--->
+<img width="160" alt="simple-key-walker" src="https://i.gyazo.com/6e78b995975cba298cab2522e8cef376.png" />
 
 ```html
   <script type="module">
