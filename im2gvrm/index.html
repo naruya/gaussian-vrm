@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>im2gvrm results</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #232b26; color: #d3ddd5; font: 14px/1.5 system-ui, sans-serif; padding: 20px; }
+  h1 { font-size: 18px; color: #e2e8f0; margin-bottom: 4px; }
+  #sub { color: #64748b; font-size: 12px; margin-bottom: 16px; }
+  #sub a { color: #60a5fa; }
+  #glcanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+  #page { position: relative; z-index: 1; }
+  table { border-collapse: collapse; }
+  th, td { border: 1px solid #39443c; padding: 8px; vertical-align: middle; text-align: center; }
+  th { background: #2c362f; color: #aebbb0; font-weight: 600; position: sticky; top: 0; z-index: 2; }
+  td.name { color: #e8efe9; font-weight: 600; background: #2c362f; position: sticky; left: 0; }
+  td.cell-img, td.cell-splat { width: 320px; min-width: 320px; max-width: 320px; height: 300px; }
+  .cell-img img { max-height: 300px; max-width: 304px; width: auto; height: auto; display: block; margin: 0 auto; background: repeating-conic-gradient(#31413a 0% 25%, #27332c 0% 50%) 0 0 / 18px 18px; cursor: zoom-in; }
+  .cell-splat { position: relative; }
+  .view { width: 100%; height: 100%; cursor: grab; border: 1px dashed #39443c; }
+  .view.loaded { border-color: transparent; }
+  .view.expanded { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                   width: min(92vw, 92vh); height: min(92vw, 92vh); z-index: 21; }
+  .view .status { color: #475569; font-size: 12px; padding-top: 130px; pointer-events: none; }
+  .cell-splat select { position: absolute; left: 6px; bottom: 6px; z-index: 4; max-width: 70%;
+                       background: rgba(30, 40, 34, 0.75); color: #d3ddd5; border: 1px solid #45524a; padding: 2px 4px; }
+  .expand-btn { position: absolute; top: 6px; right: 6px; z-index: 4; width: 26px; height: 26px;
+                background: rgba(30, 40, 34, 0.55); color: #cfe0d3; border: 1px solid rgba(160, 180, 165, 0.4);
+                border-radius: 4px; cursor: pointer; font: 14px system-ui, sans-serif; line-height: 1; padding: 0; }
+  .expand-btn:hover { background: rgba(30, 40, 34, 0.85); color: #fff; }
+  .missing { color: #3f4859; }
+  #backdrop { display: none; position: fixed; inset: 0; background: rgba(5,6,10,.92); z-index: 20; }
+  body.expanding table { visibility: hidden; }             /* hide the grid while expanded ... */
+  body.expanding .view.expanded { visibility: visible; }   /* ... except the expanded view itself */
+  #closebtn { display: none; position: fixed; z-index: 23; width: 32px; height: 32px; border-radius: 50%;
+              left: calc(50% + min(46vw, 46vh) - 8px); top: calc(50% - min(46vw, 46vh) - 8px);
+              background: #161a26; color: #e2e8f0; border: 1px solid #3b4a6b; cursor: pointer; font-size: 16px; }
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(5,6,10,.92); z-index: 30;
+              align-items: center; justify-content: center; cursor: zoom-out; }
+  #lightbox img { max-width: 96vw; max-height: 96vh; }
+</style>
+</head>
+<body>
+<canvas id="glcanvas"></canvas>
+<div id="page">
+<h1>im2gvrm — 結果一覧</h1>
+<div id="sub">行 = 入力写真 / 列 = 処理段階。3D はドラッグで回転・スクロールでズーム（単一 WebGL コンテキスト描画）。</div>
+<div id="tablebox">loading…</div>
+</div>
+<div id="backdrop"></div><button id="closebtn">×</button>
+<div id="lightbox" onclick="this.style.display='none'"><img></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/",
+    "@sparkjsdev/spark": "https://unpkg.com/@sparkjsdev/spark@2.0.0/dist/spark.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
+
+const MAX_LOADED = 12;                       // LRU cap on simultaneously loaded splats
+const canvas = document.getElementById("glcanvas");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setScissorTest(true);
+window.addEventListener("resize", () => renderer.setSize(window.innerWidth, window.innerHeight));
+canvas.addEventListener("webglcontextlost", e => e.preventDefault());
+canvas.addEventListener("webglcontextrestored", () => {
+  const wantedNow = views.filter(v => v.loaded || v.wanted);
+  for (const v of views) if (v.loaded) unloadView(v);
+  for (const v of wantedNow) if (v.wanted) loadView(v);
+});
+
+const views = [];                            // {el, cfg, scene, camera, controls, mesh, loaded, wanted, stamp}
+
+function makeView(el, cfg) {
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AxesHelper(0.5));
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1000);
+  camera.position.set(0, 0.3, 1.8);
+  const controls = new OrbitControls(camera, el);
+  controls.enableDamping = false;                // inertia caused post-drag oscillation in the shared-canvas setup
+  controls.minDistance = 0.2; controls.maxDistance = 50;
+  const v = { el, cfg, scene, camera, controls, mesh: null, loaded: false, loading: false, wanted: false, stamp: 0 };
+  views.push(v);
+  return v;
+}
+
+function applyTransform(v) {
+  const { cfg } = v;
+  const root = new THREE.Group();
+  root.rotation.x = Math.PI;
+  const m = v.mesh;
+  m.rotation.y = Math.PI / 2 + (cfg.yaw || 0) * Math.PI / 180;
+  m.scale.setScalar(cfg.scale || 1);
+  m.position.set(cfg.oz || 0, cfg.oy || 0, 0);
+  root.add(m);
+  v.root = root;
+  v.scene.add(root);
+}
+
+async function loadView(v) {
+  if (v.loaded || v.loading) return;
+  v.loading = true;
+  v.el.querySelector(".status").textContent = "loading…";
+  try {
+    const spark = new SparkRenderer({ renderer });
+    v.scene.add(spark);
+    v.spark = spark;
+    v.mesh = new SplatMesh({ url: v.cfg.src });
+    applyTransform(v);
+    await v.mesh.initialized;
+    v.loaded = true; v.el.classList.add("loaded");
+    v.el.querySelector(".status").textContent = "";
+  } catch (e) {
+    v.el.querySelector(".status").textContent = "load error";
+    console.error(e);
+  }
+  v.loading = false;
+  enforceCap();
+}
+
+function unloadView(v) {
+  if (!v.loaded) return;
+  try {
+    v.scene.remove(v.root); v.scene.remove(v.spark);
+    v.mesh.dispose?.();
+    v.spark.dispose?.();
+  } catch (e) {}
+  v.mesh = null; v.root = null; v.spark = null; v.loaded = false;
+  v.el.classList.remove("loaded");
+  v.el.querySelector(".status").textContent = "（スクロールで再読込）";
+}
+
+function enforceCap() {
+  const loaded = views.filter(v => v.loaded);
+  if (loaded.length <= MAX_LOADED) return;
+  loaded.sort((a, b) => a.stamp - b.stamp);            // oldest first
+  for (const v of loaded.slice(0, loaded.length - MAX_LOADED)) {
+    if (!v.wanted) unloadView(v);
+  }
+}
+
+const io = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    const v = views.find(x => x.el === e.target);
+    if (!v) continue;
+    v.wanted = e.isIntersecting;
+    if (v.wanted) { v.stamp = performance.now(); loadView(v); }
+  }
+}, { rootMargin: "600px" });
+
+renderer.setAnimationLoop(() => {
+  const W = window.innerWidth, H = window.innerHeight;
+  renderer.setScissor(0, 0, W, H); renderer.setViewport(0, 0, W, H);
+  renderer.setClearColor(0x000000, 0); renderer.clear();   // page shows through outside the views
+  const expEl = document.querySelector(".view.expanded");
+  for (const v of views) {
+    if (!v.loaded) continue;
+    if (expEl && v.el !== expEl) continue;         // expanded mode: draw only that view
+    const r = v.el.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W || r.width === 0) continue;
+    v.stamp = performance.now();
+    v.controls.update();
+    const y = H - r.bottom;
+    renderer.setViewport(r.left, y, r.width, r.height);
+    renderer.setScissor(r.left, y, r.width, r.height);
+    v.camera.aspect = r.width / r.height;
+    v.camera.updateProjectionMatrix();
+    renderer.setClearColor(0x5c7a66, 1);       // per-scene sage background inside the scissor rect
+    renderer.clear();
+    renderer.render(v.scene, v.camera);
+  }
+});
+
+// ---- page ------------------------------------------------------------------
+async function main() {
+  const m = await (await fetch("manifest.json?ts=" + Date.now())).json();
+  const V = "?v=" + (m.version || Date.now());
+  const box = document.getElementById("tablebox");
+  const backdrop = document.getElementById("backdrop");
+  const closeBtn = document.getElementById("closebtn");
+  let expandedEl = null;
+  function collapse() {
+    if (expandedEl) expandedEl.classList.remove("expanded");
+    expandedEl = null;
+    canvas.style.zIndex = "0";                     // canvas back under the page
+    document.getElementById("page").style.zIndex = "1";
+    document.body.classList.remove("expanding");
+    backdrop.style.display = "none"; closeBtn.style.display = "none";
+  }
+  function expand(el) {
+    collapse(); expandedEl = el; el.classList.add("expanded");
+    canvas.style.zIndex = "21";                    // canvas above the backdrop while expanded
+    document.getElementById("page").style.zIndex = "22";   // page (holds the expanded view) above the backdrop: pointer events reach it
+    document.body.classList.add("expanding");
+    backdrop.style.display = "block"; closeBtn.style.display = "block";
+  }
+  backdrop.onclick = collapse; closeBtn.onclick = collapse;
+  // while expanded, #page sits above the backdrop: treat any click outside the expanded view as "close"
+  document.addEventListener("click", e => {
+    if (!expandedEl) return;
+    if (expandedEl.contains(e.target) || closeBtn.contains(e.target)) return;
+    collapse();
+  }, true);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") collapse(); });
+
+  const tbl = document.createElement("table");
+  const thead = tbl.createTHead().insertRow();
+  thead.appendChild(Object.assign(document.createElement("th"), { textContent: "" }));
+  for (const c of m.columns) thead.appendChild(Object.assign(document.createElement("th"), { textContent: c.label }));
+  const tb = tbl.createTBody();
+  for (const row of m.rows) {
+    const tr = tb.insertRow();
+    const nameTd = tr.insertCell(); nameTd.textContent = row.name; nameTd.className = "name";
+    for (const c of m.columns) {
+      const td = tr.insertCell();
+      const src = row.cells[c.key];
+      if (!src) { td.innerHTML = "<span class='missing'>—</span>"; continue; }
+      if (c.type === "image") {
+        td.className = "cell-img";
+        const img = document.createElement("img");
+        img.loading = "lazy"; img.src = src + V;
+        img.onclick = () => { const lb = document.getElementById("lightbox"); lb.querySelector("img").src = src + V; lb.style.display = "flex"; };
+        td.appendChild(img);
+      } else {
+        td.className = "cell-splat";
+        const cell = (typeof src === "string") ? { src } : src;
+        const el = document.createElement("div");
+        el.className = "view";
+        el.innerHTML = "<div class='status'></div>";
+        td.appendChild(el);
+        const cfg = { src: cell.src + V, yaw: cell.yaw, scale: cell.scale, oy: cell.oy, oz: cell.oz };
+        const v = makeView(el, cfg);
+        io.observe(el);
+
+        const badge = document.createElement("div");
+        badge.style.cssText = "display:none;position:absolute;top:6px;left:6px;z-index:3;background:#7f1d1d;color:#fecaca;font-size:11px;padding:1px 6px;pointer-events:none;";
+        td.style.position = "relative"; td.appendChild(badge);
+        const showBadge = x => {
+          if (x.bad) { badge.textContent = "⚠ 無効疑い (透け " + Math.round((x.st || 0) * 100) + "%)"; badge.style.display = "block"; }
+          else badge.style.display = "none";
+        };
+        showBadge(cell);
+
+        const eb = document.createElement("button");
+        eb.className = "expand-btn"; eb.textContent = "⛶"; eb.title = "拡大";
+        eb.onclick = () => expand(el);
+        td.appendChild(eb);
+
+        if (cell.variants) {
+          const sel = document.createElement("select");
+          for (const [j, x] of cell.variants.entries())
+            sel.appendChild(Object.assign(document.createElement("option"), { value: j, textContent: x.label }));
+          const apply = j => {
+            const x = cell.variants[j];
+            unloadView(v);
+            v.cfg = { src: x.src + V, yaw: x.yaw, scale: x.scale, oy: x.oy, oz: x.oz };
+            showBadge(x);
+            if (v.wanted) loadView(v);
+          };
+          sel.onchange = () => apply(sel.value);
+          const def = cell.variants.findIndex(x => !x.bad);
+          if (def > 0) { sel.value = def; apply(def); }
+          td.appendChild(sel);
+        }
+      }
+    }
+  }
+  box.replaceChildren(tbl);
+}
+main().catch(e => document.getElementById("tablebox").textContent = "error: " + e);
+</script>
+</body>
+</html>

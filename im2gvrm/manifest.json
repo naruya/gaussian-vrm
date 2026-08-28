@@ -1,0 +1,400 @@
+{
+ "version": 1787738052,
+ "columns": [
+  {
+   "key": "orig",
+   "label": "元画像",
+   "type": "image"
+  },
+  {
+   "key": "fov40",
+   "label": "FOV40 補正",
+   "type": "image"
+  },
+  {
+   "key": "fov40_splat",
+   "label": "TripoSplat (全身)",
+   "type": "splat"
+  },
+  {
+   "key": "upper_splat",
+   "label": "TripoSplat (上)",
+   "type": "splat"
+  },
+  {
+   "key": "lower_splat",
+   "label": "TripoSplat (下)",
+   "type": "splat"
+  },
+  {
+   "key": "upperchest_raw_splat",
+   "label": "TripoSplat (胸上)",
+   "type": "splat"
+  },
+  {
+   "key": "ucside_splat",
+   "label": "マージ (上+下) + 胸シェル",
+   "type": "splat"
+  },
+  {
+   "key": "merged3s_splat",
+   "label": "マージ (上+下+胸/輪郭)",
+   "type": "splat"
+  }
+ ],
+ "rows": [
+  {
+   "name": "arai",
+   "cells": {
+    "orig": "data/arai/orig.jpg",
+    "fov40": "data/arai/fov40.png",
+    "fov40_splat": {
+     "src": "data/arai/fov40_splat.splat",
+     "yaw": 5.6
+    },
+    "upper_splat": {
+     "src": "data/arai/upper_splat.splat",
+     "yaw": -3.8,
+     "scale": 0.6249,
+     "oy": -0.2214,
+     "oz": 0.0,
+     "bad": false,
+     "st": 0.11
+    },
+    "lower_splat": {
+     "src": "data/arai/lower_splat.splat",
+     "yaw": 33.4,
+     "scale": 0.505,
+     "oy": 0.2475,
+     "oz": 0.0134,
+     "bad": false,
+     "st": 0.181
+    },
+    "upperchest_raw_splat": {
+     "src": "data/arai/upperchest_raw_splat.splat",
+     "yaw": 2.0,
+     "bad": true,
+     "st": 0.624
+    },
+    "ucside_splat": {
+     "src": "data/arai/ucside_splat.splat"
+    },
+    "merged3s_splat": {
+     "src": "data/arai/merged3s_splat.splat"
+    }
+   }
+  },
+  {
+   "name": "arai2",
+   "cells": {
+    "orig": "data/arai2/orig.jpg",
+    "fov40": "data/arai2/fov40.png",
+    "fov40_splat": {
+     "src": "data/arai2/fov40_splat.splat",
+     "yaw": -0.2
+    },
+    "upper_splat": {
+     "src": "data/arai2/upper_splat.splat",
+     "yaw": -7.4,
+     "scale": 0.6213,
+     "oy": -0.2189,
+     "oz": 0.0,
+     "bad": false,
+     "st": 0.085
+    },
+    "lower_splat": {
+     "src": "data/arai2/lower_splat.splat",
+     "yaw": 1.0,
+     "scale": 0.5,
+     "oy": 0.25,
+     "oz": 0.0098,
+     "bad": false,
+     "st": 0.09
+    },
+    "upperchest_raw_splat": {
+     "src": "data/arai2/upperchest_raw_splat.splat",
+     "yaw": -5.8,
+     "bad": false,
+     "st": 0.197
+    },
+    "ucside_splat": {
+     "src": "data/arai2/ucside_splat.splat"
+    },
+    "merged3s_splat": {
+     "src": "data/arai2/merged3s_splat.splat"
+    }
+   }
+  },
+  {
+   "name": "naka",
+   "cells": {
+    "orig": "data/naka/orig.jpg",
+    "fov40": "data/naka/fov40.png",
+    "fov40_splat": {
+     "src": "data/naka/fov40_splat.splat",
+     "yaw": 3.5
+    },
+    "upper_splat": {
+     "src": "data/naka/upper_splat.splat",
+     "yaw": 6.1,
+     "scale": 0.9439,
+     "oy": -0.2188,
+     "oz": 0.0,
+     "bad": false,
+     "st": 0.179
+    },
+    "lower_splat": {
+     "src": "data/naka/lower_splat.splat",
+     "yaw": 6.3,
+     "scale": 0.5642,
+     "oy": 0.2179,
+     "oz": 0.0027,
+     "bad": true,
+     "st": 0.488,
+     "variants": [
+      {
+       "label": "seed 42 (k=+0.51) ⚠無効疑い",
+       "src": "data/naka/lower_splat.splat",
+       "yaw": 6.3,
+       "scale": 0.5642,
+       "oy": 0.2179,
+       "oz": 0.0027,
+       "bad": true,
+       "st": 0.488
+      },
+      {
+       "label": "seed 1 (k=+0.37) ✓",
+       "src": "data/naka/lower_splat_s1.splat",
+       "yaw": 0.2,
+       "bad": false,
+       "st": 0.132,
+       "scale": 0.5642,
+       "oy": 0.2179,
+       "oz": 0.0027
+      },
+      {
+       "label": "seed 2 (k=+0.58) ⚠無効疑い",
+       "src": "data/naka/lower_splat_s2.splat",
+       "yaw": 3.0,
+       "bad": true,
+       "st": 0.51,
+       "scale": 0.5642,
+       "oy": 0.2179,
+       "oz": 0.0027
+      },
+      {
+       "label": "seed 3 (k=+0.32) ⚠無効疑い",
+       "src": "data/naka/lower_splat_s3.splat",
+       "yaw": 0.9,
+       "bad": true,
+       "st": 0.297,
+       "scale": 0.5642,
+       "oy": 0.2179,
+       "oz": 0.0027
+      }
+     ]
+    },
+    "upperchest_raw_splat": {
+     "src": "data/naka/upperchest_raw_splat.splat",
+     "yaw": -13.7,
+     "bad": false,
+     "st": 0.129
+    },
+    "ucside_splat": {
+     "src": "data/naka/ucside_splat.splat"
+    },
+    "merged3s_splat": {
+     "src": "data/naka/merged3s_splat.splat"
+    }
+   }
+  },
+  {
+   "name": "shoji",
+   "cells": {
+    "orig": "data/shoji/orig.jpg",
+    "fov40": "data/shoji/fov40.png",
+    "fov40_splat": {
+     "src": "data/shoji/fov40_splat.splat",
+     "yaw": -0.6
+    },
+    "upper_splat": {
+     "src": "data/shoji/upper_splat.splat",
+     "yaw": 14.8,
+     "scale": 0.9839,
+     "oy": -0.2188,
+     "oz": 0.0,
+     "bad": true,
+     "st": 0.308,
+     "variants": [
+      {
+       "label": "seed 42 (k=-0.05) ⚠無効疑い",
+       "src": "data/shoji/upper_splat.splat",
+       "yaw": 14.8,
+       "scale": 0.9839,
+       "oy": -0.2188,
+       "oz": 0.0,
+       "bad": true,
+       "st": 0.308
+      },
+      {
+       "label": "seed 1 (k=-0.01) ✓",
+       "src": "data/shoji/upper_splat_s1.splat",
+       "yaw": -1.4,
+       "bad": false,
+       "st": 0.202,
+       "scale": 0.9839,
+       "oy": -0.2188,
+       "oz": 0.0
+      }
+     ]
+    },
+    "lower_splat": {
+     "src": "data/shoji/lower_splat.splat",
+     "yaw": 0.1,
+     "scale": 0.5625,
+     "oy": 0.2188,
+     "oz": -0.0036,
+     "bad": true,
+     "st": 0.076,
+     "variants": [
+      {
+       "label": "seed 42 (k=+0.29) ⚠無効疑い",
+       "src": "data/shoji/lower_splat.splat",
+       "yaw": 0.1,
+       "scale": 0.5625,
+       "oy": 0.2188,
+       "oz": -0.0036,
+       "bad": true,
+       "st": 0.076
+      },
+      {
+       "label": "seed 1 (k=+0.42) ⚠無効疑い",
+       "src": "data/shoji/lower_splat_s1.splat",
+       "yaw": 8.5,
+       "bad": true,
+       "st": 0.057,
+       "scale": 0.5625,
+       "oy": 0.2188,
+       "oz": -0.0036
+      },
+      {
+       "label": "seed 2 (k=+0.33) ✓",
+       "src": "data/shoji/lower_splat_s2.splat",
+       "yaw": 3.2,
+       "bad": false,
+       "st": 0.042,
+       "scale": 0.5625,
+       "oy": 0.2188,
+       "oz": -0.0036
+      }
+     ]
+    },
+    "upperchest_raw_splat": {
+     "src": "data/shoji/upperchest_raw_splat.splat",
+     "yaw": 0.3,
+     "bad": false,
+     "st": 0.207
+    },
+    "ucside_splat": {
+     "src": "data/shoji/ucside_splat.splat"
+    },
+    "merged3s_splat": {
+     "src": "data/shoji/merged3s_splat.splat"
+    }
+   }
+  },
+  {
+   "name": "ueda",
+   "cells": {
+    "orig": "data/ueda/orig.jpg",
+    "fov40": "data/ueda/fov40.png",
+    "fov40_splat": {
+     "src": "data/ueda/fov40_splat.splat",
+     "yaw": -2.0
+    },
+    "upper_splat": {
+     "src": "data/ueda/upper_splat.splat",
+     "yaw": 5.5,
+     "scale": 0.8065,
+     "oy": -0.219,
+     "oz": 0.0,
+     "bad": false,
+     "st": 0.158
+    },
+    "lower_splat": {
+     "src": "data/ueda/lower_splat.splat",
+     "yaw": -7.8,
+     "scale": 0.5637,
+     "oy": 0.2182,
+     "oz": 0.0127,
+     "bad": true,
+     "st": 0.078,
+     "variants": [
+      {
+       "label": "seed 42 (k=+0.08) ⚠無効疑い",
+       "src": "data/ueda/lower_splat.splat",
+       "yaw": -7.8,
+       "scale": 0.5637,
+       "oy": 0.2182,
+       "oz": 0.0127,
+       "bad": true,
+       "st": 0.078
+      },
+      {
+       "label": "seed 1 (k=+0.23) ⚠無効疑い",
+       "src": "data/ueda/lower_splat_s1.splat",
+       "yaw": -3.9,
+       "bad": true,
+       "st": 0.037,
+       "scale": 0.5637,
+       "oy": 0.2182,
+       "oz": 0.0127
+      },
+      {
+       "label": "seed 2 (k=+0.26) ⚠無効疑い",
+       "src": "data/ueda/lower_splat_s2.splat",
+       "yaw": 47.3,
+       "bad": true,
+       "st": 0.471,
+       "scale": 0.5637,
+       "oy": 0.2182,
+       "oz": 0.0127
+      },
+      {
+       "label": "seed 3 (k=+0.20) ⚠無効疑い",
+       "src": "data/ueda/lower_splat_s3.splat",
+       "yaw": -12.1,
+       "bad": true,
+       "st": 0.071,
+       "scale": 0.5637,
+       "oy": 0.2182,
+       "oz": 0.0127
+      },
+      {
+       "label": "seed 4 (k=+0.20) ⚠無効疑い",
+       "src": "data/ueda/lower_splat_s4.splat",
+       "yaw": -6.2,
+       "bad": true,
+       "st": 0.093,
+       "scale": 0.5637,
+       "oy": 0.2182,
+       "oz": 0.0127
+      }
+     ]
+    },
+    "upperchest_raw_splat": {
+     "src": "data/ueda/upperchest_raw_splat.splat",
+     "yaw": -0.3,
+     "bad": false,
+     "st": 0.058
+    },
+    "ucside_splat": {
+     "src": "data/ueda/ucside_splat.splat"
+    },
+    "merged3s_splat": {
+     "src": "data/ueda/merged3s_splat.splat"
+    }
+   }
+  }
+ ]
+}
