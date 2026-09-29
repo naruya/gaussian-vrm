@@ -13,6 +13,7 @@ export class PLYParser {
       ['int', 4], ['uint', 4],
       ['float', 4], ['double', 8]
     ]);
+    this.maxFileSize = 512 * 1024 * 1024; // 512MB cap to prevent unbounded memory/CPU usage
   }
 
   async parsePLY(url, showProgress) {
@@ -36,6 +37,10 @@ export class PLYParser {
       totalLength = Number(response.headers.get('content-length'));
     }
 
+    if (totalLength && totalLength > this.maxFileSize) {
+      throw new Error(`PLY file too large (${totalLength} bytes): exceeds ${this.maxFileSize} byte limit`);
+    }
+
     const response = await fetch(url);
     const reader = response.body.getReader();
     const chunks = [];
@@ -46,8 +51,13 @@ export class PLYParser {
       const { done, value } = await reader.read();
       if (done) break;
 
-      chunks.push(value);
       loadedLength += value.length;
+      if (loadedLength > this.maxFileSize) {
+        reader.cancel();
+        throw new Error(`PLY file exceeds ${this.maxFileSize} byte limit`);
+      }
+
+      chunks.push(value);
 
       const loaddisplay = document.getElementById('loaddisplay');
       if (loaddisplay) {
