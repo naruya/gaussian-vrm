@@ -14,9 +14,9 @@
     "lib/gaussian-vrm.bundled.js"
   ],
   "peerDependencies": {
-    "three": "^0.170.0",
     "@pixiv/three-vrm": ">=2.1.0",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "three": "^0.170.0"
   },
   "repository": {
     "type": "git",
@@ -43,7 +43,8 @@
     "build": "node build.js"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "esbuild": "^0.24.0",
+    "express": "^5.2.1"
   },
   "publishConfig": {
     "access": "public"
