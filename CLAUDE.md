@@ -76,27 +76,25 @@ error.js              # Error logging and reporting utilities
 
 **Prerequisites**:
 - Node.js and npm installed
-- Express.js: `npm install -g express` (or install locally)
-
-**SSL Certificate Setup** (required for HTTPS):
-```bash
-# Generate self-signed certificates
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
-mkdir -p .server
-mv *.pem .server/
-```
+- `npm install` (installs express as a devDependency)
 
 **Start Development Server**:
 ```bash
-# Start HTTPS development server (required for WebRTC and some browser features)
 node server.js
-# Access at https://localhost:8080
+# http://localhost:8080  (localhost is a secure context in Chrome, so WebGL/WebXR work over http)
+# https://localhost:8443 is added when .server/key.pem and .server/cert.pem exist (needed for
+# headsets on the LAN; see the openssl line in server.js)
 ```
 
 **Applications**:
-- Main editor: `https://localhost:8080/`
-- Simple viewer: `https://localhost:8080/examples/simple-viewer.html`
-- Avatar World demo: `https://localhost:8080/apps/avatarworld/`
+- Main editor: `http://localhost:8080/`
+- Simple viewer: `http://localhost:8080/examples/simple-viewer.html`
+- Avatar World demo: `http://localhost:8080/apps/avatarworld/`
+
+**Helper scripts** (`claude/`, see `claude/README.md`): `serve.sh` (dev server), `chrome.sh` (throwaway
+Windows Chrome with DevTools port), `drive.sh` (open a page, evaluate JS, screenshot, dump console),
+`gpu.sh` (VRAM check before running the conversion). Use these to verify both the conversion side
+(`?gs=`) and the viewer side (`?gvrm=`) in a real browser.
 
 ### Loading Files
 
@@ -105,11 +103,10 @@ node server.js
 - `?gvrm=<path>` - Load existing GVRM file
 - `?stage=<0|1|2|3>` - Skip preprocessing stages (for debugging)
 - `?vr` - Enable VR mode
-- `?gpu` - Use GPU-accelerated preprocessing
+- `?cpu` - Use the CPU splat-assignment path (GPU path is the default)
 - `?nobg` - Remove background splats
 - `?nocheck` - Skip validation checks
 - `?saveply` - Save processed PLY alongside GVRM
-- `?customtype=<float>` - Custom shader material type
 - `?size=<width>,<height>` - Canvas size override
 
 **Note**: VRM model is fixed to `./assets/sotai.vrm`. VRM scale is automatically calculated from the Gaussian splat height.
