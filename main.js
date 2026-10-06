@@ -295,6 +295,11 @@ function updateStatusList() {
 
 const fpsc = new FPSCounter();
 
+// exposed for scripted comparisons (claude/drive.sh): camera + controls
+window.camera = camera;
+window.controls = controls;
+window.controls2 = controls2;
+
 // Mobile detection and UI setup
 // Check User-Agent for mobile devices
 let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);

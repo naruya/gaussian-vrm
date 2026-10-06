@@ -39,7 +39,21 @@ const [, , url, waitMs, out, expr] = process.argv;
     try { result = await page.evaluate(expr); }
     catch (e) { result = 'EVAL ERROR: ' + e.message; }
   }
-  if (out && out !== '-') await page.screenshot({ path: out });
+  if (expr) await new Promise(r => setTimeout(r, 700)); // let the scene settle after the eval
+  if (out && out !== '-') {
+    // DPR=2 renders the page at 2x device pixels; CLIP="x,y,w,h" (CSS px) crops the screenshot.
+    const dpr = Number(process.env.DPR || 0);
+    if (dpr) {
+      const vp = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+      await page.setViewport({ ...vp, deviceScaleFactor: dpr });
+      await new Promise(r => setTimeout(r, 1200));
+    }
+    const clip = process.env.CLIP ? process.env.CLIP.split(',').map(Number) : null;
+    await page.screenshot({
+      path: out,
+      ...(clip ? { clip: { x: clip[0], y: clip[1], width: clip[2], height: clip[3] } } : {}),
+    });
+  }
 
   console.log(JSON.stringify({ url: page.url(), result, logs: logs.slice(-100) }, null, 1));
   browser.disconnect();

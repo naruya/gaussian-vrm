@@ -38,5 +38,5 @@ if [ "$shot" != '-' ]; then
   shot_win=${shot_win//\\//}
 fi
 cd "$DRV_WSL"
-"$NODE" drive.mjs "$url" "$wait" "$shot_win" "$expr"
+WSLENV=DPR:CLIP:DL_DIR "$NODE" drive.mjs "$url" "$wait" "$shot_win" "$expr"
 if [ "$shot" != '-' ]; then echo "screenshot: $HERE/shots/$shot.png" >&2; fi
