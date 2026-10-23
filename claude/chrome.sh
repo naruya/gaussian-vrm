@@ -23,7 +23,7 @@ PORT=9222
 case ${1:-} in
   open)
     URL=${2:-http://localhost:8080/}
-    CMD="'$CHROME' --user-data-dir=$PROFILE_WIN --remote-debugging-port=$PORT --no-first-run --no-default-browser-check --hide-crash-restore-bubble --new-window --window-size=1400,900 '$URL'"
+    CMD="'$CHROME' --user-data-dir=$PROFILE_WIN --remote-debugging-port=$PORT --no-first-run --no-default-browser-check --hide-crash-restore-bubble --new-window --window-position=0,0 --window-size=1400,900 '$URL'"
     if command -v mtask >/dev/null 2>&1; then
       mtask bg --silent "$CMD" "gvrm preview chrome"
     else
