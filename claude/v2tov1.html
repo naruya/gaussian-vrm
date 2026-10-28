@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+  A spark-vrm (new-format) .gvrm turned into a v1 .gvrm, the v1 way (2026-10-28, for null2n's venue).
+  The pieces come from spark-vrm (apps/shared/v1export.ts, /batch's batchDebug.v1Parts): model.ply (the splats in
+  their own frame), model.vrm (the v1 sotai reshaped to the file's body), fit.json (scale, bone operations, the v2
+  placement). Here, with this repository's own code (three 0.170, three-vrm 2.1, GaussianSplats3D):
+    the VRM is loaded, scaled and grounded as v1 does (GVRM.initVRM, z = 0.02 as preprocess binds it) and posed with
+    the bone operations (GVRMUtils.resetPose); the splats are placed with v2's transform, the v2 VRM's lean taken out
+    and its ground moved to this VRM's (v1 binds to an upright VRM; the reshaped VRM's height sets its own ground);
+    then the v1 binding (assignSplatsToBonesGL / assignSplatsToPointsGL) and the v1 file (model.vrm + model.ply +
+    data.json, as GVRM.save writes it).
+  Served from spark-vrm's dev server (public/gv1 -> this repository), driven by spark-vrm's claude/v2tov1.sh:
+    window.convertV1('/_v1/<name>', '/_v1/<name>.gvrm') writes the file through the server's /__save.
+-->
+<head>
+  <title>v2 -> v1 .gvrm</title>
+  <style>body { margin: 0; background: #111; color: #ccc; font: 12px monospace; }</style>
+</head>
+<body>
+  <div id="loaddisplay"></div>
+  <canvas id="canvas" width="320" height="320"></canvas>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+        "three/addons/controls/OrbitControls.js": "../lib/OrbitControls.js",
+        "three/addons/controls/TrackballControls.js": "../lib/TrackballControls.js",
+        "gaussian-splats-3d": "../lib/gaussian-splats-3d.module.js",
+        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import JSZip from 'jszip';
+    import { GVRM } from '../gvrm-format/gvrm.js';
+    import * as GVRMUtils from '../gvrm-format/utils.js';
+    import { assignSplatsToBonesGL, assignSplatsToPointsGL } from '../apps/preprocess/preprocess_gl.js';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    const camera = new THREE.PerspectiveCamera(65, 1, 0.01, 100);
+    camera.position.set(0, 0.8, 2.4);
+
+    window.convertV1 = async (dir, outPath) => {
+      const t0 = performance.now();
+      const scene = new THREE.Scene();
+      const fit = await (await fetch(`${dir}/fit.json`)).json();
+      const vrmUrl = `${dir}/model.vrm`;
+      const plyUrl = `${dir}/model.ply`;
+      const character = await GVRM.initVRM(vrmUrl, scene, camera, renderer, fit.modelScale, fit.boneOperations); // (without them it fetches ./assets/default.json, relative to this page)
+      const vscene = character.currentVrm.scene;
+      vscene.position.z = 0.02; // where preprocess binds it
+      vscene.updateMatrixWorld(true);
+      // the splats: v2's transform, then the v2 VRM root's lean undone about the root and the root moved onto this one
+      const p2 = new THREE.Vector3().fromArray(fit.vrm.position);
+      const q2 = new THREE.Quaternion().fromArray(fit.vrm.quaternion);
+      const yaw = vscene.quaternion.clone(); // rotateVRM0's turn (the VRM 0.x yaw), as v2's quaternion has it
+      const lean = q2.clone().multiply(yaw.clone().invert());
+      const M = new THREE.Matrix4().makeTranslation(vscene.position.x, vscene.position.y, vscene.position.z)
+        .multiply(new THREE.Matrix4().makeRotationFromQuaternion(lean.clone().invert()))
+        .multiply(new THREE.Matrix4().makeTranslation(-p2.x, -p2.y, -p2.z));
+      const S2 = new THREE.Matrix4().compose(new THREE.Vector3().fromArray(fit.splats.position), new THREE.Quaternion().fromArray(fit.splats.quaternion), new THREE.Vector3(1, 1, 1));
+      const pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
+      new THREE.Matrix4().multiplyMatrices(M, S2).decompose(pos, quat, scl);
+      const gs = await GVRM.initGS(plyUrl, pos.toArray(), quat.toArray(), scene);
+      GVRMUtils.resetPose(character, fit.boneOperations);
+      vscene.updateMatrixWorld(true);
+      const { pmc, capsuleBoneIndex } = GVRMUtils.getPointsMeshCapsules(character);
+      GVRMUtils.addPMC(scene, pmc);
+      GVRMUtils.visualizePMC(pmc, false);
+      scene.updateMatrixWorld(true);
+      renderer.render(scene, camera);
+      await assignSplatsToBonesGL(gs, pmc.capsules, capsuleBoneIndex);
+      await assignSplatsToPointsGL(character, gs, pmc.capsules, capsuleBoneIndex);
+      const sc = gs.viewer.splatMesh.scenes[0];
+      const data = {
+        modelScale: fit.modelScale,
+        boneOperations: fit.boneOperations,
+        gsQuaternion: sc.quaternion.toArray(),
+        gsPosition: sc.position.toArray(),
+        splatVertexIndices: gs.splatVertexIndices,
+        splatBoneIndices: gs.splatBoneIndices,
+        splatRelativePoses: gs.splatRelativePoses,
+      };
+      const zip = new JSZip();
+      zip.file('model.vrm', await (await fetch(vrmUrl)).arrayBuffer());
+      zip.file('model.ply', await (await fetch(plyUrl)).arrayBuffer());
+      zip.file('data.json', JSON.stringify(data, null, 2));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const st = (await fetch(`/__save?path=${encodeURIComponent(outPath.replace(/^\//, ''))}`, { method: 'POST', body: blob })).status;
+      // how far the splats sit from their vertices (v1's loader drops > 0.2 m, head > 0.3, feet > 0.1)
+      let far = 0, sum = 0;
+      for (let i = 0; i < gs.splatCount; i++) {
+        const d = Math.hypot(data.splatRelativePoses[i * 3], data.splatRelativePoses[i * 3 + 1], data.splatRelativePoses[i * 3 + 2]) * fit.modelScale;
+        sum += d;
+        if (d > 0.2) far++;
+      }
+      await gs.viewer.dispose();
+      GVRMUtils.removePMC(scene, pmc);
+      return { st, ms: Math.round(performance.now() - t0), splats: gs.splatCount, ground: character.ground, v2ground: p2.y, meanToVertexMm: Math.round((sum / gs.splatCount) * 1000), over20cm: far };
+    };
+    window.v2tov1Ready = true;
+  </script>
+</body>
+</html>

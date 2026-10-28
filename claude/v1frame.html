@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!--
+  A v1 .gvrm in a frame that spark-vrm's /compare can drive like its own /viewer (2026-10-28): the same handles
+  (window.viewerDebug: camera, controls, gvrm(); window.viewer: load, setSkeleton, setWeights, setArmpitCling), with
+  this repository's v1 library underneath. gvrm() is a small adapter over the v1 GVRM: playAnimation (a Mixamo FBX
+  by URL through the v1 character's loadFBX; still poses are not supported and stop the clip), stopAnimation, the
+  mixer (its timeScale pauses), and no-op flags for what v1 does not have (proxy mesh, hips pin, cling).
+  Both libraries put the VRM root at y = ground (the body centred on y = 0), so the synced cameras frame both alike.
+  Served from spark-vrm's dev server (public/gv1 -> this repository): /gv1/claude/v1frame.html?bare&gvrm=<url>
+-->
+<head>
+  <title>v1 frame</title>
+  <style>body { margin: 0; overflow: hidden; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+  <div id="loaddisplay" style="display:none"></div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js",
+        "three/addons/controls/OrbitControls.js": "../lib/OrbitControls.js",
+        "three/addons/controls/TrackballControls.js": "../lib/TrackballControls.js",
+        "gaussian-splats-3d": "../lib/gaussian-splats-3d.module.js",
+        "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GVRM } from '../gvrm-format/gvrm.js';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2b2b2b);
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100);
+    camera.position.set(0, 0.2, 2.6);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.update();
+    const grid = new THREE.GridHelper(10, 40, 0x555555, 0x3a3a3a);
+    scene.add(grid);
+    const resize = () => {
+      renderer.setSize(window.innerWidth, window.innerHeight); // (with the style: at a device pixel ratio above 1 the canvas otherwise shows larger than the frame)
+      camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    let gvrm;
+    let root;
+    const abs = (u) => new URL(u, location.origin + '/').href;
+    async function load(url) {
+      if (gvrm) {
+        await gvrm.remove(root);
+        scene.remove(root);
+        gvrm = undefined;
+      }
+      root = new THREE.Group();
+      scene.add(root);
+      gvrm = await GVRM.load(abs(url), root, camera, renderer);
+    }
+    const adapter = {
+      set proxyMeshVisible(_) {},
+      get proxyMeshVisible() { return false; },
+      set pinHips(_) {},
+      get pinHips() { return false; },
+      get mixer() { return gvrm?.character.currentMixer ?? { timeScale: 1 }; },
+      async playAnimation(source) {
+        if (typeof source !== 'string') return adapter.stopAnimation();
+        await gvrm.changeFBX(abs(source));
+        return gvrm.character.action;
+      },
+      stopAnimation() {
+        gvrm?.character.action?.stop();
+        return undefined;
+      },
+    };
+    window.viewerDebug = { camera, controls, gvrm: () => (gvrm ? adapter : undefined) };
+    window.viewer = { setSkeleton() {}, setWeights() {}, setArmpitCling() {}, load };
+
+    const first = new URLSearchParams(location.search).get('gvrm');
+    if (first) await load(first);
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      gvrm?.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
