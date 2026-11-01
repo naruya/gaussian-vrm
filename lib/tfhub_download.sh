@@ -6,7 +6,7 @@ set -e
 # ベースディレクトリを作成
 BASE_DIR="./models"
 mkdir -p $BASE_DIR
-TEMP_DIR="/tmp/tfjs_models"
+TEMP_DIR="$(cd "$(dirname "$0")/.." && pwd)/.tmp/tfjs_models"   # the project's .tmp/, not /tmp
 mkdir -p $TEMP_DIR
 
 # モデルのURLとローカルディレクトリのマッピング
